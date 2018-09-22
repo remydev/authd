@@ -2,8 +2,10 @@
 require "kemal"
 require "jwt"
 
+require "./user.cr"
+
 class HTTP::Server::Context
-	property authd_user : Hash(String, JSON::Any)?
+	property authd_user : AuthD::User?
 end
 
 class AuthD::Middleware < Kemal::Handler
@@ -26,7 +28,20 @@ class AuthD::Middleware < Kemal::Handler
 			payload, header = JWT.decode x_token, @key, "HS256"
 
 			if payload
-				context.authd_user = payload
+				context.authd_user = AuthD::User.new.tap do |u|
+					u.username = payload["username"].as_s?
+					u.realname = payload["realname"].as_s?
+					u.avatar = payload["avatar"].as_s?
+					u.perms = Array(String).new
+
+					payload["perms"].as_a.tap do |perms|
+						perms.each do |perm|
+							if perm.class == String
+								u.perms! << perm.as_s
+							end
+						end
+					end
+				end
 			end
 		end
 

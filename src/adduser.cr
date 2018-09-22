@@ -72,7 +72,7 @@ if user_password.nil?
 	exit 1
 end
 
-user = User.new
+user = AuthD::User.new
 user.username = user_name
 user.password = user_password
 user.perms    = user_perms

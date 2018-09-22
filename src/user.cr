@@ -2,7 +2,7 @@
 require "pg"
 require "crecto"
 
-class User < Crecto::Model
+class AuthD::User < Crecto::Model
 	schema "users" do # table name
 		field :username, String
 		field :realname, String

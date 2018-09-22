@@ -50,7 +50,7 @@ post "/token" do |env|
 		next halt env, status_code: 400, response: ({error: "Missing password."}.to_json)
 	end
 
-	user = MyRepo.get_by(User, username: username, password: password)
+	user = MyRepo.get_by AuthD::User, username: username, password: password
 
 	if ! user
 		next halt env, status_code: 400, response: ({error: "Invalid user or password."}.to_json)
