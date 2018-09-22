@@ -6,27 +6,31 @@ require "jwt"
 require "pg"
 require "crecto"
 
-MASTER_KEY = Random::Secure.base64
-authd_db_password_file = "db-password-file"
 authd_db_name = "authd"
 authd_db_hostname = "localhost"
 authd_db_user = "user"
+authd_db_password = "nico-nico-nii"
+authd_jwt_key = "nico-nico-nii"
 
 Kemal.config.extra_options do |parser|
-	parser.on "-d name", "--database-name name", "database name for authd" do |dbn|
-		authd_db_name = dbn
+	parser.on "-d name", "--database-name name", "Database name." do |name|
+		authd_db_name = name
 	end
 
-	parser.on "-u name", "--database-username user", "database user for authd" do |u|
-		authd_db_user = u
+	parser.on "-u name", "--database-username user", "Database user." do |name|
+		authd_db_user = name
 	end
 
-	parser.on "-a hostname", "--hostname host", "hostname for authd" do |h|
-		authd_db_hostname = h
+	parser.on "-a host", "--hostname host", "Database host name." do |host|
+		authd_db_hostname = host
 	end
 
-	parser.on "-P password-file", "--passfile file", "password file for authd" do |f|
-		authd_db_password_file = f
+	parser.on "-P file", "--password-file file", "Password file." do |file_name|
+		authd_db_password = File.read file_name
+	end
+
+	parser.on "-K file", "--key-file file", "JWT key file" do |file_name|
+		authd_jwt_key = File.read file_name
 	end
 end
 
@@ -73,7 +77,7 @@ post "/token" do |env|
 
 	{
 		"status" => "success",
-		"token" => JWT.encode(user.to_h, MASTER_KEY, "HS256")
+		"token" => JWT.encode(user.to_h, authd_jwt_key, "HS256")
 	}.to_json
 end
 
@@ -87,6 +91,6 @@ Kemal.run do
 		conf.hostname = authd_db_hostname
 		conf.database = authd_db_name
 		conf.username = authd_db_user
-		conf.password = File.read authd_db_password_file
+		conf.password = authd_db_password
 	end
 end
