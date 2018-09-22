@@ -6,6 +6,8 @@ require "jwt"
 require "pg"
 require "crecto"
 
+require "./user.cr"
+
 authd_db_name = "authd"
 authd_db_hostname = "localhost"
 authd_db_user = "user"
@@ -34,27 +36,6 @@ Kemal.config.extra_options do |parser|
 	end
 end
 
-class User < Crecto::Model
-	schema "users" do # table name
-		field :username, String
-		field :realname, String
-		field :avatar, String
-		field :password, String
-		field :perms, Array(String)
-	end
-
-	validate_required [:username, :password, :perms]
-
-	def to_h
-		{
-			:username => @username,
-			:realname => @realname,
-			:perms => @perms,
-			:avatar => @avatar
-		}
-	end
-end
-
 post "/token" do |env|
 	env.response.content_type = "application/json"
 
@@ -77,7 +58,7 @@ post "/token" do |env|
 
 	{
 		"status" => "success",
-		"token" => JWT.encode(user.to_h, authd_jwt_key, "HS256")
+		"token" => JWT.encode user.to_h, authd_jwt_key, "HS256"
 	}.to_json
 end
 
@@ -85,7 +66,7 @@ module MyRepo
 	extend Crecto::Repo
 end
 
-Kemal.run do
+Kemal.run 12051 do
 	MyRepo.config do |conf|
 		conf.adapter = Crecto::Adapters::Postgres
 		conf.hostname = authd_db_hostname
