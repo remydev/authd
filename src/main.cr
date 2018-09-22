@@ -28,11 +28,11 @@ Kemal.config.extra_options do |parser|
 	end
 
 	parser.on "-P file", "--password-file file", "Password file." do |file_name|
-		authd_db_password = File.read file_name
+		authd_db_password = File.read(file_name).gsub /\n$/, ""
 	end
 
 	parser.on "-K file", "--key-file file", "JWT key file" do |file_name|
-		authd_jwt_key = File.read file_name
+		authd_jwt_key = File.read file_name.gsub /\n$/, ""
 	end
 end
 
