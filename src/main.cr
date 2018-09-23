@@ -50,7 +50,7 @@ post "/token" do |env|
 		next halt env, status_code: 400, response: ({error: "Missing password."}.to_json)
 	end
 
-	user = MyRepo.get_by AuthD::User, username: username, password: password
+	user = DataBase.get_by AuthD::User, username: username, password: password
 
 	if ! user
 		next halt env, status_code: 400, response: ({error: "Invalid user or password."}.to_json)
@@ -62,16 +62,25 @@ post "/token" do |env|
 	}.to_json
 end
 
-module MyRepo
+module DataBase
 	extend Crecto::Repo
 end
 
 Kemal.run do
-	MyRepo.config do |conf|
+	DataBase.config do |conf|
 		conf.adapter = Crecto::Adapters::Postgres
 		conf.hostname = authd_db_hostname
 		conf.database = authd_db_name
 		conf.username = authd_db_user
 		conf.password = authd_db_password
+	end
+
+	# Dummy query to check DB connection is possible.
+	begin
+		DataBase.all AuthD::User, Crecto::Repo::Query.new
+	rescue e
+		puts "Database connection failed: #{e.message}"
+
+		Kemal.stop
 	end
 end
