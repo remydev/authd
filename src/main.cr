@@ -32,7 +32,7 @@ Kemal.config.extra_options do |parser|
 	end
 
 	parser.on "-K file", "--key-file file", "JWT key file" do |file_name|
-		authd_jwt_key = File.read file_name.gsub /\n$/, ""
+		authd_jwt_key = File.read(file_name).gsub /\n$/, ""
 	end
 end
 
