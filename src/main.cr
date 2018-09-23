@@ -66,7 +66,7 @@ module MyRepo
 	extend Crecto::Repo
 end
 
-Kemal.run 12051 do
+Kemal.run do
 	MyRepo.config do |conf|
 		conf.adapter = Crecto::Adapters::Postgres
 		conf.hostname = authd_db_hostname
