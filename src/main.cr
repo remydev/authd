@@ -6,48 +6,33 @@ require "jwt"
 require "pg"
 require "crecto"
 
-MASTER_KEY = Random::Secure.base64
-authd_db_password_file = "db-password-file"
+require "./user.cr"
+
 authd_db_name = "authd"
 authd_db_hostname = "localhost"
 authd_db_user = "user"
+authd_db_password = "nico-nico-nii"
+authd_jwt_key = "nico-nico-nii"
 
 Kemal.config.extra_options do |parser|
-	parser.on "-d name", "--database-name name", "database name for authd" do |dbn|
-		authd_db_name = dbn
+	parser.on "-d name", "--database-name name", "Database name." do |name|
+		authd_db_name = name
 	end
 
-	parser.on "-u name", "--database-username user", "database user for authd" do |u|
-		authd_db_user = u
+	parser.on "-u name", "--database-username user", "Database user." do |name|
+		authd_db_user = name
 	end
 
-	parser.on "-a hostname", "--hostname host", "hostname for authd" do |h|
-		authd_db_hostname = h
+	parser.on "-a host", "--hostname host", "Database host name." do |host|
+		authd_db_hostname = host
 	end
 
-	parser.on "-P password-file", "--passfile file", "password file for authd" do |f|
-		authd_db_password_file = f
-	end
-end
-
-class User < Crecto::Model
-	schema "users" do # table name
-		field :username, String
-		field :realname, String
-		field :avatar, String
-		field :password, String
-		field :perms, Array(String)
+	parser.on "-P file", "--password-file file", "Password file." do |file_name|
+		authd_db_password = File.read(file_name).chomp
 	end
 
-	validate_required [:username, :password, :perms]
-
-	def to_h
-		{
-			:username => @username,
-			:realname => @realname,
-			:perms => @perms,
-			:avatar => @avatar
-		}
+	parser.on "-K file", "--key-file file", "JWT key file" do |file_name|
+		authd_jwt_key = File.read(file_name).chomp
 	end
 end
 
@@ -65,7 +50,7 @@ post "/token" do |env|
 		next halt env, status_code: 400, response: ({error: "Missing password."}.to_json)
 	end
 
-	user = MyRepo.get_by(User, username: username, password: password)
+	user = DataBase.get_by AuthD::User, username: username, password: password
 
 	if ! user
 		next halt env, status_code: 400, response: ({error: "Invalid user or password."}.to_json)
@@ -73,20 +58,29 @@ post "/token" do |env|
 
 	{
 		"status" => "success",
-		"token" => JWT.encode(user.to_h, MASTER_KEY, "HS256")
+		"token" => JWT.encode user.to_h, authd_jwt_key, "HS256"
 	}.to_json
 end
 
-module MyRepo
+module DataBase
 	extend Crecto::Repo
 end
 
 Kemal.run do
-	MyRepo.config do |conf|
+	DataBase.config do |conf|
 		conf.adapter = Crecto::Adapters::Postgres
 		conf.hostname = authd_db_hostname
 		conf.database = authd_db_name
 		conf.username = authd_db_user
-		conf.password = File.read authd_db_password_file
+		conf.password = authd_db_password
+	end
+
+	# Dummy query to check DB connection is possible.
+	begin
+		DataBase.all AuthD::User, Crecto::Repo::Query.new
+	rescue e
+		puts "Database connection failed: #{e.message}"
+
+		Kemal.stop
 	end
 end
