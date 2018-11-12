@@ -1,52 +1,59 @@
 
-require "kemal"
 require "jwt"
+
+require "ipc"
 
 require "./user.cr"
 
-class HTTP::Server::Context
-	property authd_user : AuthD::User?
-end
-
-class AuthD::Middleware < Kemal::Handler
-	property key : String = ""
-
-	@configured = false
-	@configurator : Proc(Middleware, Nil)
-
-	def initialize(&block : Proc(Middleware, Nil))
-		@configurator = block
+module AuthD
+	enum RequestTypes
+		GET_TOKEN
 	end
 
-	def call(context)
-		unless @configured
-			@configured = true
-			@configurator.call self
+	enum ResponseTypes
+		OK
+		MALFORMED_REQUEST
+		INVALID_CREDENTIALS
+	end
+
+	class GetTokenRequest
+		JSON.mapping({
+			username: String,
+			password: String
+		})
+	end
+
+	class Client < IPC::Client
+		property key : String
+
+		def initialize
+			@key = ""
+
+			initialize "auth"
 		end
 
-		context.request.headers["X-Token"]?.try do |x_token|
-			payload, header = JWT.decode x_token, @key, "HS256"
+		def get_token?(username : String, password : String)
+			send RequestTypes::GET_TOKEN.value.to_u8, {
+				:username => username,
+				:password => password
+			}.to_json
 
-			if payload
-				context.authd_user = AuthD::User.new.tap do |u|
-					u.username = payload["username"].as_s?
-					u.realname = payload["realname"].as_s?
-					u.avatar = payload["avatar"].as_s?
-					u.perms = Array(String).new
+			response = read
 
-					payload["perms"].as_a.tap do |perms|
-						perms.each do |perm|
-							if perm.class == String
-								u.perms! << perm.as_s
-							end
-						end
-					end
-				end
+			if response.type == ResponseTypes::OK.value.to_u8
+				response.payload
+			else
+				nil
 			end
 		end
 
-		call_next context
+		def decode_token(token)
+			user, meta = JWT.decode token, @key, "HS256"
+
+			user = AuthD::User.from_json user.to_json
+
+			{user, meta}
+		end
 	end
 end
-
 

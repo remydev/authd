@@ -1,12 +1,16 @@
 require "uuid"
+require "option_parser"
 
-require "kemal"
 require "jwt"
 
 require "pg"
 require "crecto"
 
-require "./user.cr"
+require "ipc"
+
+require "./authd.cr"
+
+extend AuthD
 
 authd_db_name = "authd"
 authd_db_hostname = "localhost"
@@ -14,7 +18,7 @@ authd_db_user = "user"
 authd_db_password = "nico-nico-nii"
 authd_jwt_key = "nico-nico-nii"
 
-Kemal.config.extra_options do |parser|
+OptionParser.parse! do |parser|
 	parser.on "-d name", "--database-name name", "Database name." do |name|
 		authd_db_name = name
 	end
@@ -34,53 +38,68 @@ Kemal.config.extra_options do |parser|
 	parser.on "-K file", "--key-file file", "JWT key file" do |file_name|
 		authd_jwt_key = File.read(file_name).chomp
 	end
-end
 
-post "/token" do |env|
-	env.response.content_type = "application/json"
+	parser.on "-h", "--help", "Show this help" do
+		puts parser
 
-	username = env.params.json["username"]?
-	password = env.params.json["password"]?
-
-	if ! username.is_a? String
-		next halt env, status_code: 400, response: ({error: "Missing username."}.to_json)
+		exit 0
 	end
-
-	if ! password.is_a? String
-		next halt env, status_code: 400, response: ({error: "Missing password."}.to_json)
-	end
-
-	user = DataBase.get_by AuthD::User, username: username, password: password
-
-	if ! user
-		next halt env, status_code: 400, response: ({error: "Invalid user or password."}.to_json)
-	end
-
-	{
-		"status" => "success",
-		"token" => JWT.encode user.to_h, authd_jwt_key, "HS256"
-	}.to_json
 end
 
 module DataBase
 	extend Crecto::Repo
 end
 
-Kemal.run do
-	DataBase.config do |conf|
-		conf.adapter = Crecto::Adapters::Postgres
-		conf.hostname = authd_db_hostname
-		conf.database = authd_db_name
-		conf.username = authd_db_user
-		conf.password = authd_db_password
-	end
+DataBase.config do |conf|
+	conf.adapter = Crecto::Adapters::Postgres
+	conf.hostname = authd_db_hostname
+	conf.database = authd_db_name
+	conf.username = authd_db_user
+	conf.password = authd_db_password
+end
 
-	# Dummy query to check DB connection is possible.
-	begin
-		DataBase.all AuthD::User, Crecto::Repo::Query.new
-	rescue e
-		puts "Database connection failed: #{e.message}"
+# Dummy query to check DB connection is possible.
+begin
+	DataBase.all User, Crecto::Repo::Query.new
+rescue e
+	puts "Database connection failed: #{e.message}"
 
-		Kemal.stop
+	exit 1
+end
+
+##
+# Provides a JWT-based authentication scheme for service-specific users.
+IPC::Service.new "auth" do |event|
+	client = event.client
+	
+	case event
+	when IPC::Event::Message
+		message = event.message
+		payload = message.payload
+
+		case RequestTypes.new message.type.to_i
+		when RequestTypes::GET_TOKEN
+			begin
+				request = GetTokenRequest.from_json payload
+			rescue e
+				client.send ResponseTypes::MALFORMED_REQUEST.value.to_u8, e.message || ""
+
+				next
+			end
+
+			user = DataBase.get_by User,
+				username: request.username,
+				password: request.password
+
+			if user.nil?
+				client.send ResponseTypes::INVALID_CREDENTIALS.value.to_u8, ""
+				
+				next
+			end
+
+			client.send ResponseTypes::OK.value.to_u8,
+				JWT.encode user.to_h, authd_jwt_key, "HS256"
+		end
 	end
 end
+
