@@ -1,7 +1,7 @@
 
 # authd
 
-## Requirement installation
+## Dependencies
 
 - crystal
 - shards
@@ -12,6 +12,7 @@ Usually install on Aarch like
 sudo pacman -S crystal shards git vim postgresql
 ```
 ## Database init
+
 ```shell
 sudo su -l postgres
 initdb -D '/var/lib/postgres/data'
@@ -22,6 +23,7 @@ createdb <database>
 ```
 
 ## Database setup
+
 ```shell
 psql -d <database>
 ```
