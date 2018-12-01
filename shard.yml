@@ -1,12 +1,12 @@
 name: authd
-version: 0.1.0
+version: 0.2.0
 
 authors:
   - Karchnu <karchnu@karchnu.fr>
   - Luka Vandervelden <lukc@upyum.com>
 
 description: |
-    Web authentication daemon.
+    JWT-based authentication daemon.
 
 targets:
   authd:
@@ -14,11 +14,11 @@ targets:
   authd-adduser:
     main: src/adduser.cr
 
-crystal: 0.26
+crystal: 0.27
 
 dependencies:
-    kemal:
-        github: kemalcr/kemal
+    ipc:
+        git: https://git.karchnu.fr/JunkOS/ipc.cr
         branch: master
     jwt:
         github: crystal-community/jwt
