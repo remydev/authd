@@ -7,7 +7,7 @@
 - shards
 - postgresql
 
-Usually install on Aarch like
+Usually install on Arch like
 ```shell
 sudo pacman -S crystal shards git vim postgresql
 ```
