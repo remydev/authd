@@ -38,7 +38,6 @@ git clone <url>
 cd authd
 shards install
 shards build
-cd bin
-./authd -u <dbuser> -d <database>
+./bin/authd -u <dbuser> -d <database>
 ```
 
