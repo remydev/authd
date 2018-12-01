@@ -34,7 +34,7 @@ create table users(id int, created_at date, updated_at date, username text, real
 ## start
 
 ```shell
-git clone <branch>
+git clone <url>
 cd authd
 shards install
 shards build
