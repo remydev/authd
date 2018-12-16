@@ -9,30 +9,21 @@ require "crecto"
 require "ipc"
 
 require "./authd.cr"
+require "./passwd.cr"
 
 extend AuthD
 
-authd_db_name = "authd"
-authd_db_hostname = "localhost"
-authd_db_user = "user"
-authd_db_password = "nico-nico-nii"
+authd_passwd_file = "passwd"
+authd_group_file = "group"
 authd_jwt_key = "nico-nico-nii"
 
 OptionParser.parse! do |parser|
-	parser.on "-d name", "--database-name name", "Database name." do |name|
-		authd_db_name = name
+	parser.on "-u file", "--passwd-file file", "passwd file." do |name|
+		authd_passwd_file = name
 	end
 
-	parser.on "-u name", "--database-username user", "Database user." do |name|
-		authd_db_user = name
-	end
-
-	parser.on "-a host", "--hostname host", "Database host name." do |host|
-		authd_db_hostname = host
-	end
-
-	parser.on "-P file", "--password-file file", "Password file." do |file_name|
-		authd_db_password = File.read(file_name).chomp
+	parser.on "-g file", "--group-file file", "group file." do |name|
+		authd_group_file = name
 	end
 
 	parser.on "-K file", "--key-file file", "JWT key file" do |file_name|
@@ -46,26 +37,7 @@ OptionParser.parse! do |parser|
 	end
 end
 
-module DataBase
-	extend Crecto::Repo
-end
-
-DataBase.config do |conf|
-	conf.adapter = Crecto::Adapters::Postgres
-	conf.hostname = authd_db_hostname
-	conf.database = authd_db_name
-	conf.username = authd_db_user
-	conf.password = authd_db_password
-end
-
-# Dummy query to check DB connection is possible.
-begin
-	DataBase.all User, Crecto::Repo::Query.new
-rescue e
-	puts "Database connection failed: #{e.message}"
-
-	exit 1
-end
+passwd = Passwd.new authd_passwd_file, authd_group_file
 
 ##
 # Provides a JWT-based authentication scheme for service-specific users.
@@ -87,9 +59,7 @@ IPC::Service.new "auth" do |event|
 				next
 			end
 
-			user = DataBase.get_by User,
-				username: request.username,
-				password: request.password
+			user = passwd.get_user request.username, request.password
 
 			if user.nil?
 				client.send ResponseTypes::INVALID_CREDENTIALS.value.to_u8, ""

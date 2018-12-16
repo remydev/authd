@@ -4,6 +4,7 @@ require "jwt"
 require "ipc"
 
 require "./user.cr"
+require "./group.cr"
 
 module AuthD
 	enum RequestTypes
@@ -18,6 +19,7 @@ module AuthD
 
 	class GetTokenRequest
 		JSON.mapping({
+			# FIXME: Rename to "login" for consistency.
 			username: String,
 			password: String
 		})
