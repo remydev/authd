@@ -59,7 +59,7 @@ IPC::Service.new "auth" do |event|
 				next
 			end
 
-			user = passwd.get_user request.username, request.password
+			user = passwd.get_user request.login, request.password
 
 			if user.nil?
 				client.send ResponseTypes::INVALID_CREDENTIALS.value.to_u8, ""

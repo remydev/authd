@@ -20,7 +20,7 @@ module AuthD
 	class GetTokenRequest
 		JSON.mapping({
 			# FIXME: Rename to "login" for consistency.
-			username: String,
+			login: String,
 			password: String
 		})
 	end
@@ -34,9 +34,9 @@ module AuthD
 			initialize "auth"
 		end
 
-		def get_token?(username : String, password : String)
+		def get_token?(login : String, password : String)
 			send RequestTypes::GET_TOKEN.value.to_u8, {
-				:username => username,
+				:login => login,
 				:password => password
 			}.to_json
 
