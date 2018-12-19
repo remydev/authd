@@ -13,6 +13,12 @@ require "./passwd.cr"
 
 extend AuthD
 
+class IPC::RemoteClient
+	def send(type : ResponseTypes, payload : String)
+		send type.value.to_u8, payload
+	end
+end
+
 authd_passwd_file = "passwd"
 authd_group_file = "group"
 authd_jwt_key = "nico-nico-nii"
@@ -69,6 +75,24 @@ IPC::Service.new "auth" do |event|
 
 			client.send ResponseTypes::OK.value.to_u8,
 				JWT.encode user.to_h, authd_jwt_key, "HS256"
+		when RequestTypes::ADD_USER
+			begin
+				request = AddUserRequest.from_json payload
+			rescue e
+				client.send ResponseTypes::MALFORMED_REQUEST.value.to_u8, e.message || ""
+
+				next
+			end
+
+			if passwd.user_exists? request.login
+				client.send ResponseTypes::INVALID_USER, "Another user with the same login already exists."
+
+				next
+			end
+
+			user = passwd.add_user request.login, request.password
+
+			client.send ResponseTypes::OK, user.to_json
 		end
 	end
 end

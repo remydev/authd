@@ -48,6 +48,14 @@ class Passwd
 		end
 	end
 
+	def user_exists?(login : String) : Bool
+		each_user do |user|
+			return true if user.login == login
+		end
+
+		false
+	end
+
 	def get_user(uid : Int32) : AuthD::User?
 		each_user do |user|
 			if user.uid == uid
@@ -150,6 +158,10 @@ class Passwd
 		File.write(@passwd, user.to_csv + "\n", mode: "a")
 
 		add_group login, gid: gid, users: [user.login]
+
+		set_user_groups user
+
+		user
 	end
 
 	def add_group(name, password_hash = "x", gid = nil, users = Array(String).new)
