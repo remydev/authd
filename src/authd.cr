@@ -8,15 +8,15 @@ require "./group.cr"
 
 module AuthD
 	enum RequestTypes
-		GET_TOKEN
-		ADD_USER
+		GetToken
+		AddUser
 	end
 
 	enum ResponseTypes
-		OK
-		MALFORMED_REQUEST
-		INVALID_CREDENTIALS
-		INVALID_USER
+		Ok
+		MalformedRequest
+		InvalidCredentials
+		InvalidUser
 	end
 
 	class GetTokenRequest
@@ -48,14 +48,14 @@ module AuthD
 		end
 
 		def get_token?(login : String, password : String)
-			send RequestTypes::GET_TOKEN.value.to_u8, {
+			send RequestTypes::GetToken.value.to_u8, {
 				:login => login,
 				:password => password
 			}.to_json
 
 			response = read
 
-			if response.type == ResponseTypes::OK.value.to_u8
+			if response.type == ResponseTypes::Ok.value.to_u8
 				response.payload
 			else
 				nil
@@ -76,7 +76,7 @@ module AuthD
 
 		# FIXME: Extra options may be useful to implement here.
 		def add_user(login : String, password : String) : AuthD::User | Exception
-			send RequestTypes::ADD_USER, {
+			send RequestTypes::AddUser, {
 				:login => login,
 				:password => password
 			}.to_json
@@ -85,7 +85,7 @@ module AuthD
 
 			pp! response.type
 			case ResponseTypes.new response.type.to_i
-			when ResponseTypes::OK
+			when ResponseTypes::Ok
 				AuthD::User.from_json response.payload
 			else
 				Exception.new response.payload

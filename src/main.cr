@@ -56,11 +56,11 @@ IPC::Service.new "auth" do |event|
 		payload = message.payload
 
 		case RequestTypes.new message.type.to_i
-		when RequestTypes::GET_TOKEN
+		when RequestTypes::GetToken
 			begin
 				request = GetTokenRequest.from_json payload
 			rescue e
-				client.send ResponseTypes::MALFORMED_REQUEST.value.to_u8, e.message || ""
+				client.send ResponseTypes::MalformedRequest.value.to_u8, e.message || ""
 
 				next
 			end
@@ -68,31 +68,31 @@ IPC::Service.new "auth" do |event|
 			user = passwd.get_user request.login, request.password
 
 			if user.nil?
-				client.send ResponseTypes::INVALID_CREDENTIALS.value.to_u8, ""
+				client.send ResponseTypes::InvalidCredentials.value.to_u8, ""
 				
 				next
 			end
 
-			client.send ResponseTypes::OK.value.to_u8,
+			client.send ResponseTypes::Ok.value.to_u8,
 				JWT.encode user.to_h, authd_jwt_key, "HS256"
-		when RequestTypes::ADD_USER
+		when RequestTypes::AddUser
 			begin
 				request = AddUserRequest.from_json payload
 			rescue e
-				client.send ResponseTypes::MALFORMED_REQUEST.value.to_u8, e.message || ""
+				client.send ResponseTypes::MalformedRequest.value.to_u8, e.message || ""
 
 				next
 			end
 
 			if passwd.user_exists? request.login
-				client.send ResponseTypes::INVALID_USER, "Another user with the same login already exists."
+				client.send ResponseTypes::InvalidUser, "Another user with the same login already exists."
 
 				next
 			end
 
 			user = passwd.add_user request.login, request.password
 
-			client.send ResponseTypes::OK, user.to_json
+			client.send ResponseTypes::Ok, user.to_json
 		end
 	end
 end
