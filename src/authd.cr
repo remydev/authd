@@ -10,6 +10,7 @@ module AuthD
 	enum RequestTypes
 		GetToken
 		AddUser
+		GetUser
 	end
 
 	enum ResponseTypes
@@ -17,6 +18,7 @@ module AuthD
 		MalformedRequest
 		InvalidCredentials
 		InvalidUser
+		UserNotFound # For UID-based GetUser requests.
 	end
 
 	class GetTokenRequest
@@ -38,6 +40,12 @@ module AuthD
 		})
 	end
 
+	class GetUserRequest
+		JSON.mapping({
+			uid: Int32
+		})
+	end
+
 	class Client < IPC::Client
 		property key : String
 
@@ -48,7 +56,7 @@ module AuthD
 		end
 
 		def get_token?(login : String, password : String)
-			send RequestTypes::GetToken.value.to_u8, {
+			send RequestTypes::GetToken, {
 				:login => login,
 				:password => password
 			}.to_json
@@ -57,6 +65,18 @@ module AuthD
 
 			if response.type == ResponseTypes::Ok.value.to_u8
 				response.payload
+			else
+				nil
+			end
+		end
+
+		def get_user?(uid : Int32)
+			send RequestTypes::GetUser, {:uid => uid}.to_json
+
+			response = read
+
+			if response.type == ResponseTypes::Ok.value.to_u8
+				User.from_json response.payload
 			else
 				nil
 			end
