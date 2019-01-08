@@ -59,7 +59,6 @@ class Passwd
 	def get_user(uid : Int32) : AuthD::User?
 		each_user do |user|
 			if user.uid == uid
-				# FIXME: Check user groups and register them here.
 				set_user_groups user
 
 				return user
@@ -76,8 +75,9 @@ class Passwd
 
 		each_user do |user|
 			if user.login == login
-				# FIXME: XXX: HASH!!!!!
 				if user.password_hash == hash
+					set_user_groups user
+
 					return user
 				end
 
