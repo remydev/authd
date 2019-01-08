@@ -8,7 +8,6 @@ class AuthD::User
 	getter shell           : String = "/bin/nologin"
 	getter groups          = Array(String).new
 	getter full_name       : String? = nil
-	getter avatar          : String? = nil
 	getter location        : String? = nil
 	getter office_phone_number : String? = nil
 	getter home_phone_number   : String? = nil
@@ -23,7 +22,6 @@ class AuthD::User
 		shell: String,
 		groups: Array(String),
 		full_name: String?,
-		avatar: String?,
 		office_phone_number: String?,
 		home_phone_number: String?,
 		other_contact: String?
@@ -42,7 +40,6 @@ class AuthD::User
 			:shell => @shell,
 			:groups => @groups,
 			:full_name => @full_name,
-			:avatar => @avatar,
 			:office_phone_number => @office_phone_number,
 			:home_phone_number => @home_phone_number,
 			:other_contact => @other_contact
