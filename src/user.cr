@@ -12,6 +12,7 @@ class AuthD::User
 	getter office_phone_number : String? = nil
 	getter home_phone_number   : String? = nil
 	getter other_contact   : String? = nil
+	getter avatar          : String? = nil
 
 	JSON.mapping({
 		login: String,
@@ -42,7 +43,8 @@ class AuthD::User
 			:full_name => @full_name,
 			:office_phone_number => @office_phone_number,
 			:home_phone_number => @home_phone_number,
-			:other_contact => @other_contact
+			:other_contact => @other_contact,
+			:avatar => @avatar
 		}
 	end
 end

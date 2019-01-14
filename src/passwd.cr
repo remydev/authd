@@ -201,6 +201,7 @@ class AuthD::User
 			@office_phone_number = gecos[2]?
 			@home_phone_number = gecos[3]?
 			@other_contact = gecos[4]?
+			@avatar = gecos[5]? # CAUTION: NON-STANDARD EXTENSION
 		end
 
 		# FIXME: What about those two fields? Keep them, remove them?
