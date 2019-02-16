@@ -11,6 +11,7 @@ module AuthD
 		GetToken
 		AddUser
 		GetUser
+		GetUserByCredentials
 	end
 
 	enum ResponseTypes
@@ -46,6 +47,13 @@ module AuthD
 		})
 	end
 
+	class GetUserByCredentialsRequest
+		JSON.mapping({
+			login: String,
+			password: String
+		})
+	end
+
 	class Client < IPC::Client
 		property key : String
 
@@ -65,6 +73,21 @@ module AuthD
 
 			if response.type == ResponseTypes::Ok.value.to_u8
 				response.payload
+			else
+				nil
+			end
+		end
+
+		def get_user?(login : String, password : String)
+			send RequestTypes::GetUserByCredentials, {
+				:login => login,
+				:password => password
+			}.to_json
+
+			response = read
+
+			if response.type == ResponseTypes::Ok.value.to_u8
+				User.from_json response.payload
 			else
 				nil
 			end

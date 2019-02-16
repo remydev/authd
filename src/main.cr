@@ -93,6 +93,21 @@ IPC::Service.new "auth" do |event|
 			user = passwd.add_user request.login, request.password
 
 			client.send ResponseTypes::Ok, user.to_json
+		when RequestTypes::GetUserByCredentials
+			begin
+				request = GetUserByCredentialsRequest.from_json payload
+			rescue e
+				client.send ResponseTypes::MalformedRequest, e.message || ""
+				next
+			end
+
+			user = passwd.get_user request.login, request.password
+
+			if user
+				client.send ResponseTypes::Ok, user.to_json
+			else
+				client.send ResponseTypes::UserNotFound, ""
+			end
 		when RequestTypes::GetUser
 			begin
 				request = GetUserRequest.from_json payload
