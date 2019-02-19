@@ -1,10 +1,8 @@
 require "uuid"
 require "option_parser"
+require "openssl"
 
 require "jwt"
-
-require "pg"
-require "crecto"
 
 require "ipc"
 
