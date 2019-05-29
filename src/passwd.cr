@@ -188,7 +188,7 @@ class Passwd
 			end
 		end
 
-		puts new_passwd.join
+		File.write @passwd, new_passwd.join
 	end
 end
 
