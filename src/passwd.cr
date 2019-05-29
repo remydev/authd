@@ -171,6 +171,25 @@ class Passwd
 
 		File.write(@group, group.to_csv + "\n", mode: "a")
 	end
+
+	# FIXME: Edit other important fields.
+	def mod_user(uid, password_hash : String? = nil)
+		new_passwd = passwd_as_array.map do |line|
+			user = AuthD::User.new line	
+
+			if uid == user.uid
+				password_hash.try do |hash|
+					user.password_hash = hash
+				end
+
+				user.to_csv
+			else
+				line.join(':') + "\n"
+			end
+		end
+
+		puts new_passwd.join
+	end
 end
 
 class AuthD::Group

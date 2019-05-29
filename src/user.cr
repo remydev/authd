@@ -1,4 +1,6 @@
 
+require "json"
+
 class AuthD::User
 	getter login           : String
 	getter password_hash   : String
