@@ -58,7 +58,8 @@ module AuthD
 	class ModUserRequest
 		JSON.mapping({
 			uid: Int32,
-			password: String?
+			password: String?,
+			avatar: String?
 		})
 	end
 
@@ -143,12 +144,16 @@ module AuthD
 			end
 		end
 
-		def mod_user(uid : Int32, password : String?) : Bool | Exception
+		def mod_user(uid : Int32, password : String? = nil, avatar : String? = nil) : Bool | Exception
 			payload = Hash(String, String|Int32).new
 			payload["uid"] = uid
 
 			password.try do |password|
 				payload["password"] = password
+			end
+
+			avatar.try do |avatar|
+				payload["avatar"] = avatar
 			end
 
 			send RequestTypes::ModUser, payload.to_json
