@@ -1,9 +1,11 @@
 
+require "json"
+
 class AuthD::User
-	getter login           : String
-	getter password_hash   : String
 	getter uid             : Int32
 	getter gid             : Int32
+	getter login           : String
+	getter password_hash   : String
 	getter home            : String = "/"
 	getter shell           : String = "/bin/nologin"
 	getter groups          = Array(String).new
@@ -25,7 +27,8 @@ class AuthD::User
 		full_name: String?,
 		office_phone_number: String?,
 		home_phone_number: String?,
-		other_contact: String?
+		other_contact: String?,
+		avatar: String?
 	})
 
 	def initialize(@login, @password_hash, @uid, @gid, @home, @shell)

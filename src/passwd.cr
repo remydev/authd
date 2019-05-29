@@ -1,5 +1,6 @@
 require "csv"
 require "uuid"
+require "base64"
 
 require "./user.cr"
 require "./group.cr"
@@ -69,9 +70,7 @@ class Passwd
 	##
 	# Will fail if the user is found but the password is invalid.
 	def get_user(login : String, password : String) : AuthD::User?
-		digest = OpenSSL::Digest.new("sha256")
-		digest << password
-		hash = digest.hexdigest
+		hash = Passwd.hash_password password
 
 		each_user do |user|
 			if user.login == login
@@ -138,6 +137,12 @@ class Passwd
 		gid
 	end
 
+	def self.hash_password(password)
+		digest = OpenSSL::Digest.new("sha256")
+		digest << password
+		digest.hexdigest
+	end
+
 	def add_user(login, password = nil, uid = nil, gid = nil, home = "/", shell = "/bin/nologin")
 		# FIXME: If user already exists, exception? Replacement?
 
@@ -146,9 +151,7 @@ class Passwd
 		gid = get_free_gid if gid.nil?
 
 		password_hash = if password
-			digest = OpenSSL::Digest.new("sha256")
-			digest << password
-			digest.hexdigest
+			Passwd.hash_password password
 		else
 			"x"
 		end
@@ -170,6 +173,29 @@ class Passwd
 		group = AuthD::Group.new name, password_hash, gid, users
 
 		File.write(@group, group.to_csv + "\n", mode: "a")
+	end
+
+	# FIXME: Edit other important fields.
+	def mod_user(uid, password_hash : String? = nil, avatar : String? = nil)
+		new_passwd = passwd_as_array.map do |line|
+			user = AuthD::User.new line	
+
+			if uid == user.uid
+				password_hash.try do |hash|
+					user.password_hash = hash
+				end
+
+				avatar.try do |avatar|
+					user.avatar = avatar
+				end
+
+				user.to_csv
+			else
+				line.join(':') + "\n"
+			end
+		end
+
+		File.write @passwd, new_passwd.join
 	end
 end
 
@@ -201,7 +227,15 @@ class AuthD::User
 			@office_phone_number = gecos[2]?
 			@home_phone_number = gecos[3]?
 			@other_contact = gecos[4]?
-			@avatar = gecos[5]? # CAUTION: NON-STANDARD EXTENSION
+
+			# CAUTION: NON-STANDARD EXTENSION
+			@avatar = gecos[5]?.try do |x|
+				if x != ""
+					Base64.decode_string x
+				else
+					nil
+				end
+			end
 		end
 
 		# FIXME: What about those two fields? Keep them, remove them?
@@ -214,7 +248,7 @@ class AuthD::User
 	end
 
 	def gecos
-		unless @location || @office_phone_number || @home_phone_number || @other_contact
+		unless @location || @office_phone_number || @home_phone_number || @other_contact || @avatar
 			if @full_name
 				return @full_name
 			else
@@ -222,7 +256,7 @@ class AuthD::User
 			end
 		end
 
-		[@full_name || "", @location || "", @office_phone_number || "", @home_phone_number || "", @other_contact || ""].join ","
+		[@full_name || "", @location || "", @office_phone_number || "", @home_phone_number || "", @other_contact || "", Base64.strict_encode(@avatar || "")].join ","
 	end
 end
 
