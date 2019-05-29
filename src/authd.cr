@@ -12,6 +12,7 @@ module AuthD
 		AddUser
 		GetUser
 		GetUserByCredentials
+		ModUser # Edit user attributes.
 	end
 
 	enum ResponseTypes
@@ -51,6 +52,13 @@ module AuthD
 		JSON.mapping({
 			login: String,
 			password: String
+		})
+	end
+
+	class ModUserRequest
+		JSON.mapping({
+			uid: Int32,
+			password: String?
 		})
 	end
 
@@ -130,6 +138,26 @@ module AuthD
 			case ResponseTypes.new response.type.to_i
 			when ResponseTypes::Ok
 				AuthD::User.from_json response.payload
+			else
+				Exception.new response.payload
+			end
+		end
+
+		def mod_user(uid : Int32, password : String?) : Bool | Exception
+			payload = Hash(String, String|Int32).new
+			payload["uid"] = uid
+
+			password.try do |password|
+				payload["password"] = password
+			end
+
+			send RequestTypes::ModUser, payload.to_json
+
+			response = read
+
+			case ResponseTypes.new response.type.to_i
+			when ResponseTypes::Ok
+				true
 			else
 				Exception.new response.payload
 			end

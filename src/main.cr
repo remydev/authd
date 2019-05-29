@@ -121,6 +121,21 @@ IPC::Service.new "auth" do |event|
 			else
 				client.send ResponseTypes::UserNotFound, ""
 			end
+		when RequestTypes::ModUser
+			begin
+				request = ModUserRequest.from_json payload
+			rescue e
+				client.send ResponseTypes::MalformedRequest, e.message || ""
+				next
+			end
+
+			password_hash = request.password.try do |s|
+				Passwd.hash_password s
+			end
+
+			passwd.mod_user request.uid, password_hash: password_hash
+
+			client.send ResponseTypes::Ok, ""
 		end
 	end
 end

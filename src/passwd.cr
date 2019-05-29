@@ -69,9 +69,7 @@ class Passwd
 	##
 	# Will fail if the user is found but the password is invalid.
 	def get_user(login : String, password : String) : AuthD::User?
-		digest = OpenSSL::Digest.new("sha256")
-		digest << password
-		hash = digest.hexdigest
+		hash = Passwd.hash_password password
 
 		each_user do |user|
 			if user.login == login
@@ -138,6 +136,12 @@ class Passwd
 		gid
 	end
 
+	def self.hash_password(password)
+		digest = OpenSSL::Digest.new("sha256")
+		digest << password
+		digest.hexdigest
+	end
+
 	def add_user(login, password = nil, uid = nil, gid = nil, home = "/", shell = "/bin/nologin")
 		# FIXME: If user already exists, exception? Replacement?
 
@@ -146,9 +150,7 @@ class Passwd
 		gid = get_free_gid if gid.nil?
 
 		password_hash = if password
-			digest = OpenSSL::Digest.new("sha256")
-			digest << password
-			digest.hexdigest
+			Passwd.hash_password password
 		else
 			"x"
 		end
