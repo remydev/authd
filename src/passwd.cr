@@ -195,7 +195,7 @@ class Passwd
 			end
 		end
 
-		File.write @passwd, new_passwd.join
+		File.write @passwd, new_passwd.join + "\n"
 	end
 end
 
