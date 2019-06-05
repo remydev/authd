@@ -80,7 +80,7 @@ module AuthD
 
 			response = read
 
-			if response.user_type == ResponseTypes::Ok.value.to_u8
+			if response.type == ResponseTypes::Ok.value.to_u8
 				response.payload
 			else
 				nil
@@ -95,7 +95,7 @@ module AuthD
 
 			response = read
 
-			if response.user_type == ResponseTypes::Ok.value.to_u8
+			if response.type == ResponseTypes::Ok.value.to_u8
 				User.from_json response.payload
 			else
 				nil
@@ -107,7 +107,7 @@ module AuthD
 
 			response = read
 
-			if response.user_type == ResponseTypes::Ok.value.to_u8
+			if response.type == ResponseTypes::Ok.value.to_u8
 				User.from_json response.payload
 			else
 				nil
@@ -135,8 +135,8 @@ module AuthD
 
 			response = read
 
-			pp! response.user_type
-			case ResponseTypes.new response.user_type.to_i
+			pp! response.type
+			case ResponseTypes.new response.type.to_i
 			when ResponseTypes::Ok
 				AuthD::User.from_json response.payload
 			else
@@ -160,7 +160,7 @@ module AuthD
 
 			response = read
 
-			case ResponseTypes.new response.user_type.to_i
+			case ResponseTypes.new response.type.to_i
 			when ResponseTypes::Ok
 				true
 			else
