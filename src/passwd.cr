@@ -38,8 +38,6 @@ class Passwd
 			if group.users.any? { |name| name == user.login }
 				user.groups << group.name
 			end
-
-			pp group
 		end
 	end
 

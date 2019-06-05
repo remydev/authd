@@ -11,9 +11,9 @@ require "./passwd.cr"
 
 extend AuthD
 
-class IPC::RemoteClient
-	def send(type : ResponseTypes, payload : String)
-		send type.value.to_u8, payload
+class IPC::Connection
+	def send(type : AuthD::ResponseTypes, payload : String)
+		send type.to_u8, payload
 	end
 end
 
@@ -46,14 +46,21 @@ passwd = Passwd.new authd_passwd_file, authd_group_file
 ##
 # Provides a JWT-based authentication scheme for service-specific users.
 IPC::Service.new "auth" do |event|
-	client = event.client
+	if event.is_a? IPC::Exception
+		puts "oh no"
+		pp! event
+		next
+	end
+
+	client = event.connection
 	
 	case event
 	when IPC::Event::Message
 		message = event.message
 		payload = message.payload
+		pp message
 
-		case RequestTypes.new message.type.to_i
+		case RequestTypes.new message.user_type.to_i
 		when RequestTypes::GetToken
 			begin
 				request = GetTokenRequest.from_json payload
