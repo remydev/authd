@@ -38,8 +38,6 @@ class Passwd
 			if group.users.any? { |name| name == user.login }
 				user.groups << group.name
 			end
-
-			pp group
 		end
 	end
 
@@ -195,7 +193,7 @@ class Passwd
 			end
 		end
 
-		File.write @passwd, new_passwd.join
+		File.write @passwd, new_passwd.join + "\n"
 	end
 end
 

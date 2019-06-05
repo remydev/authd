@@ -63,7 +63,7 @@ module AuthD
 		})
 	end
 
-	class Client < IPC::Client
+	class Client < IPC::Connection
 		property key : String
 
 		def initialize
