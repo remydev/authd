@@ -119,7 +119,7 @@ module AuthD
 		end
 
 		def decode_token(token)
-			user, meta = JWT.decode token, @key, "HS256"
+			user, meta = JWT.decode token, @key, JWT::Algorithm::HS256
 
 			user = AuthD::User.from_json user.to_json
 
@@ -135,7 +135,6 @@ module AuthD
 
 			response = read
 
-			pp! response.type
 			payload = String.new response.payload
 			case ResponseTypes.new response.type.to_i
 			when ResponseTypes::Ok

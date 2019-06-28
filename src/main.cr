@@ -58,7 +58,6 @@ IPC::Service.new "auth" do |event|
 	when IPC::Event::Message
 		message = event.message
 		payload = message.payload
-		pp message
 
 		case RequestTypes.new message.type.to_i
 		when RequestTypes::GetToken
@@ -79,7 +78,7 @@ IPC::Service.new "auth" do |event|
 			end
 
 			client.send ResponseTypes::Ok.value.to_u8,
-				JWT.encode user.to_h, authd_jwt_key, "HS256"
+				JWT.encode user.to_h, authd_jwt_key, JWT::Algorithm::HS256
 		when RequestTypes::AddUser
 			begin
 				request = AddUserRequest.from_json String.new payload
