@@ -96,7 +96,7 @@ IPC::Service.new "auth" do |event|
 
 			user = passwd.add_user request.login, request.password
 
-			client.send ResponseTypes::Ok, user.to_json
+			client.send ResponseTypes::Ok, user.sanitize!.to_json
 		when RequestTypes::GetUserByCredentials
 			begin
 				request = GetUserByCredentialsRequest.from_json String.new payload
@@ -108,7 +108,7 @@ IPC::Service.new "auth" do |event|
 			user = passwd.get_user request.login, request.password
 
 			if user
-				client.send ResponseTypes::Ok, user.to_json
+				client.send ResponseTypes::Ok, user.sanitize!.to_json
 			else
 				client.send ResponseTypes::UserNotFound, ""
 			end
@@ -123,7 +123,7 @@ IPC::Service.new "auth" do |event|
 			user = passwd.get_user request.uid
 
 			if user
-				client.send ResponseTypes::Ok, user.to_json
+				client.send ResponseTypes::Ok, user.sanitize!.to_json
 			else
 				client.send ResponseTypes::UserNotFound, ""
 			end
