@@ -108,7 +108,7 @@ module AuthD
 			response = read
 
 			if response.type == ResponseTypes::Ok.value.to_u8
-				User.from_json response.payload
+				User.from_json String.new response.payload
 			else
 				nil
 			end
