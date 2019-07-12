@@ -189,11 +189,11 @@ class Passwd
 
 				user.to_csv
 			else
-				line.join(':') + "\n"
+				line.join(':')
 			end
 		end
 
-		File.write @passwd, new_passwd.join + "\n"
+		File.write @passwd, new_passwd.join("\n") + "\n"
 	end
 end
 

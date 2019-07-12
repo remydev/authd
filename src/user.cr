@@ -34,6 +34,11 @@ class AuthD::User
 	def initialize(@login, @password_hash, @uid, @gid, @home, @shell)
 	end
 
+	def sanitize!
+		@password_hash = "x"
+		self
+	end
+
 	def to_h
 		{
 			:login => @login,

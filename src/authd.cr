@@ -72,7 +72,7 @@ module AuthD
 			initialize "auth"
 		end
 
-		def get_token?(login : String, password : String)
+		def get_token?(login : String, password : String) : String?
 			send RequestTypes::GetToken, {
 				:login => login,
 				:password => password
@@ -81,13 +81,13 @@ module AuthD
 			response = read
 
 			if response.type == ResponseTypes::Ok.value.to_u8
-				response.payload
+				String.new response.payload
 			else
 				nil
 			end
 		end
 
-		def get_user?(login : String, password : String)
+		def get_user?(login : String, password : String) : User?
 			send RequestTypes::GetUserByCredentials, {
 				:login => login,
 				:password => password
@@ -96,7 +96,7 @@ module AuthD
 			response = read
 
 			if response.type == ResponseTypes::Ok.value.to_u8
-				User.from_json response.payload
+				User.from_json String.new response.payload
 			else
 				nil
 			end
@@ -108,7 +108,7 @@ module AuthD
 			response = read
 
 			if response.type == ResponseTypes::Ok.value.to_u8
-				User.from_json response.payload
+				User.from_json String.new response.payload
 			else
 				nil
 			end
@@ -119,7 +119,7 @@ module AuthD
 		end
 
 		def decode_token(token)
-			user, meta = JWT.decode token, @key, "HS256"
+			user, meta = JWT.decode token, @key, JWT::Algorithm::HS256
 
 			user = AuthD::User.from_json user.to_json
 
@@ -135,12 +135,12 @@ module AuthD
 
 			response = read
 
-			pp! response.type
+			payload = String.new response.payload
 			case ResponseTypes.new response.type.to_i
 			when ResponseTypes::Ok
-				AuthD::User.from_json response.payload
+				AuthD::User.from_json payload
 			else
-				Exception.new response.payload
+				Exception.new payload
 			end
 		end
 
@@ -164,7 +164,7 @@ module AuthD
 			when ResponseTypes::Ok
 				true
 			else
-				Exception.new response.payload
+				Exception.new String.new response.payload
 			end
 		end
 	end
